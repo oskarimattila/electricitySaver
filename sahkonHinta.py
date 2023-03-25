@@ -3,13 +3,29 @@ import json
 from datetime import datetime
 from lights import turnOn, changeLight
 from telegram import sendTelegram
-import daytime
+from priceInfo import getAllPrices, getPrice
+#import daytime
 
-# These are the IP adddresses of the wiz lights
-light_ip_pekka = "192.168.100.45"
+# ------------- SMARTLIGHT PROJECT FOR CNTROLLING LIGHT COLOUR ACCORDING TO ELECTRICITY PRICE -------------- #
+#
+#   This program has three main elements
+#
+#     1. Retrieve latest price data from https://api.porssisahko.net/
+#     
+#     2. "Connect" to a predefined smartlight in the WLAN. More accurately this program just sends RGB values
+#         in a JSON format, encoded to bytes, using the UDP protocol. Hence, it doesn't really connect to the light.
+#
+#     3. Send price info to predefined users via Telegram.
+#
+#   To see detailed description how the lights are controlled, refer to the comments in the lights.py file.
+#
+
+# These are the IP adddresses of the wiz lights 
+light_ip_pekka = "192.168.100.45"                   # Not a security risk, as these are local IPs assigned by the router.
 light_ip_okko = "192.168.1.240"
+
 # Predefined colours for indicating different colors. These rgb values will be injected 
-# to the lights via UDP byte stream
+# to the smartlights via UDP protocol
 green = {
   "r": 100,
   "g": 255,
@@ -29,29 +45,11 @@ yellow = {
   "dimming": 100
 }
 
-# This function retrieves the current price for electricity for the hour
-def getPrice():
-  today = datetime.now()
-
-  url = "https://api.porssisahko.net/v1/price.json?date={}&hour={}".format(today.date(), today.hour)
-  res = requests.get(url)
-
-  prices = open("prices.json", "w")
-  json_object = json.dumps(res.json(), indent=2)
-  prices.write(json_object)
-  prices.close()
-  f = open("prices.json", "r")
-  values = json.load(f)
-  f.close()
-  return values["price"]
-
 midPrice = 8
 highPrice = 11.65
 message = "\nElectricity price right now ----- {} snt/kWh\n"
 
-# The point is to repeat this loop every hour
-# Our ceiling value is 11 snt/kWh compare the current value every hour to our ceiling value
-# First check if we are in the operation time 08-18
+# First check if we are in the operation time 07-22
 now = datetime.now()
 hour = now.hour
 currentPrice = getPrice()
